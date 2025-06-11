@@ -1,7 +1,7 @@
 const express = require('express');
 const jsforce = require('jsforce');
 
-// 🔐 Hardcoded Salesforce credentials for testing
+// 🔐 Hardcoded Salesforce credentials for testing only
 const SALESFORCE_USERNAME = 'kevin.heraly@demandscience.com';
 const SALESFORCE_PASSWORD = 'L0v3Chl03#';
 const SALESFORCE_SECURITY_TOKEN = 'g6bCVSLyfHiwRihRJGECPHIgG';
@@ -14,11 +14,11 @@ console.log("Username:", SALESFORCE_USERNAME);
 const app = express();
 const conn = new jsforce.Connection();
 
-// Try logging into Salesforce
+// Authenticate with Salesforce
 conn.login(
   SALESFORCE_USERNAME,
   SALESFORCE_PASSWORD + SALESFORCE_SECURITY_TOKEN,
-  (err, res) => {
+  (err) => {
     if (err) {
       console.error('❌ Salesforce login failed:', err);
       process.exit(1);
@@ -28,7 +28,7 @@ conn.login(
   }
 );
 
-// Metadata endpoint required by ChatGPT MCP
+// 🔗 Root metadata endpoint for MCP connector handshake
 app.get('/', (req, res) => {
   res.set({
     'Content-Type': 'application/json',
@@ -42,12 +42,12 @@ app.get('/', (req, res) => {
   });
 });
 
-// Health check
+// ✅ Health check
 app.get('/health', (req, res) => {
   res.status(200).send('Salesforce MCP is healthy');
 });
 
-// Example endpoint for pulling 5 leads
+// 🎯 Sample endpoint: fetch 5 recent leads
 app.get('/leads', async (req, res) => {
   try {
     const result = await conn.sobject('Lead')
@@ -63,7 +63,7 @@ app.get('/leads', async (req, res) => {
   }
 });
 
-// Start Express server
+// 🔊 Start Express server
 function startServer() {
   app.listen(PORT, () => {
     console.log(`🚀 MCP server running on http://localhost:${PORT}`);
