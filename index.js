@@ -1,19 +1,20 @@
 const express = require('express');
 const jsforce = require('jsforce');
 
-// 🔐 HARDCODED credentials for testing only
+// 🔐 Hardcoded Salesforce credentials for testing
 const SALESFORCE_USERNAME = 'kevin.heraly@demandscience.com';
 const SALESFORCE_PASSWORD = 'L0v3Chl03#';
 const SALESFORCE_SECURITY_TOKEN = 'g6bCVSLyfHiwRihRJGECPHIgG';
-const PORT = 3001;
 
-console.log("🔍 Using hardcoded credentials...");
+const PORT = process.env.PORT || 3001;
+
+console.log("🔍 Using hardcoded Salesforce credentials...");
 console.log("Username:", SALESFORCE_USERNAME);
 
 const app = express();
 const conn = new jsforce.Connection();
 
-// Try login
+// Try logging into Salesforce
 conn.login(
   SALESFORCE_USERNAME,
   SALESFORCE_PASSWORD + SALESFORCE_SECURITY_TOKEN,
@@ -27,13 +28,13 @@ conn.login(
   }
 );
 
-// Root metadata endpoint (required by ChatGPT) with all necessary headers
+// Metadata endpoint required by ChatGPT MCP
 app.get('/', (req, res) => {
   res.set({
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*'
   });
-  res.json({
+  res.status(200).json({
     name: "Salesforce MCP",
     description: "Custom connector to pull Salesforce data via MCP",
     version: "1.0",
@@ -43,10 +44,10 @@ app.get('/', (req, res) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  res.send('Salesforce MCP is up');
+  res.status(200).send('Salesforce MCP is healthy');
 });
 
-// Example route: fetch 5 leads
+// Example endpoint for pulling 5 leads
 app.get('/leads', async (req, res) => {
   try {
     const result = await conn.sobject('Lead')
@@ -54,13 +55,15 @@ app.get('/leads', async (req, res) => {
       .limit(5)
       .execute();
 
-    res.json(result);
+    res.set('Access-Control-Allow-Origin', '*');
+    res.status(200).json(result);
   } catch (err) {
+    console.error("❌ Error fetching leads:", err);
     res.status(500).send(err.toString());
   }
 });
 
-// Start server AFTER Salesforce login succeeds
+// Start Express server
 function startServer() {
   app.listen(PORT, () => {
     console.log(`🚀 MCP server running on http://localhost:${PORT}`);
